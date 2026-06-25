@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Resolve version
+        id: ver
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing version $VERSION"
+
+      - name: Sync meta.json version
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          python3 -c "import json; m=json.load(open('meta.json')); m['version']='${VERSION}'; f=open('meta.json','w'); json.dump(m,f,indent=4); f.write(chr(10))"
+
+      - name: Build
+        run: dotnet build -c Release -p:Version=${{ steps.ver.outputs.version }} --nologo
+
+      - name: Package
+        id: pkg
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          mkdir -p dist
+          zip -j "dist/screentime_${VERSION}.zip" \
+            bin/Release/net9.0/Jellyfin.Plugin.ScreenTime.dll meta.json
+          echo "checksum=$(md5sum dist/screentime_${VERSION}.zip | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Attach ZIP to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/screentime_${{ steps.ver.outputs.version }}.zip
+
+      - name: Update manifest
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+          CHECKSUM: ${{ steps.pkg.outputs.checksum }}
+          TIMESTAMP: ${{ steps.pkg.outputs.timestamp }}
+          CHANGELOG: ${{ github.event.release.body }}
+        run: |
+          TARGET_ABI=$(python3 -c "import json;print(json.load(open('meta.json'))['targetAbi'])")
+          python3 scripts/update_manifest.py \
+            --version "${VERSION}" \
+            --checksum "${CHECKSUM}" \
+            --source-url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/screentime_${VERSION}.zip" \
+            --target-abi "${TARGET_ABI}" \
+            --timestamp "${TIMESTAMP}" \
+            --changelog "${CHANGELOG:-Release ${VERSION}}"
+
+      - name: Commit updated manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add manifest.json meta.json
+          git diff --cached --quiet || git commit -m "chore: release ${{ steps.ver.outputs.version }} (update manifest)"
+          git push origin main

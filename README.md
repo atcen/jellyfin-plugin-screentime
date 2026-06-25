@@ -127,6 +127,20 @@ Set a limit (e.g. `60`) only on the children's accounts; leave admins/adults at 
 - Library-lock enforcement (hiding libraries instead of stopping playback) is **not** included
   by design; the soft block already prevents new playback.
 
+## Releasing (maintainers)
+
+Releases are fully automated. To publish a new version:
+
+1. Create a GitHub **release** with a tag like `v1.0.1.0` (the `v` is stripped to form the
+   plugin version `1.0.1.0`).
+2. The [`release` workflow](.github/workflows/release.yml) then automatically:
+   - builds the plugin with that version,
+   - packages `Jellyfin.Plugin.ScreenTime.dll` + `meta.json` into `screentime_<version>.zip`,
+   - attaches the ZIP to the release,
+   - adds the new version (with MD5 checksum) to `manifest.json` and commits it back to `main`.
+
+Jellyfin servers that added the repository URL will then be offered the update automatically.
+
 ## License
 
 [MIT](LICENSE)
