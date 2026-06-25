@@ -65,6 +65,18 @@ doesn't wipe the day's progress.
 
 ## Installation
 
+### Via plugin catalog (recommended)
+
+1. In Jellyfin, go to **Dashboard → Plugins → Catalog**.
+2. Click the gear icon next to **Repositories** and add a new one:
+   - **Repository name:** `ScreenTime`
+   - **Repository URL:**
+     `https://raw.githubusercontent.com/atcen/jellyfin-plugin-screentime/refs/heads/main/manifest.json`
+3. Click **Save**.
+4. Back in the **Catalog**, find **ScreenTime** and click **Install**.
+5. Restart Jellyfin.
+6. Configure under **Dashboard → ScreenTime**.
+
 ### Manual
 
 1. Download `Jellyfin.Plugin.ScreenTime.dll` and `meta.json` from the

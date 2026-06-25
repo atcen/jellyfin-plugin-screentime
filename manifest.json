@@ -1,0 +1,20 @@
+[
+    {
+        "guid": "4d7408ff-07b0-49e5-b1a8-d484b93fcde6",
+        "name": "ScreenTime",
+        "description": "Server-side screen-time / parental control for Jellyfin. Daily watch-time limit per user with a fair soft block: the running episode finishes, new playbacks are blocked until the daily reset.",
+        "overview": "Screen-time control for kids' accounts",
+        "owner": "atcen",
+        "category": "General",
+        "versions": [
+            {
+                "version": "1.0.0.0",
+                "changelog": "Initial release: per-user daily limits, fair soft block, optional hard stop, configurable reset hour and on-screen message.",
+                "targetAbi": "10.11.0.0",
+                "sourceUrl": "https://github.com/atcen/jellyfin-plugin-screentime/releases/download/v1.0.0.0/screentime_1.0.0.0.zip",
+                "checksum": "91e22efd47e088327b76fa2963cd4f4c",
+                "timestamp": "2026-06-25T11:59:51Z"
+            }
+        ]
+    }
+]
