@@ -1,0 +1,45 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Package
+        run: |
+          mkdir -p dist/ScreenTime
+          cp bin/Release/net9.0/Jellyfin.Plugin.ScreenTime.dll dist/ScreenTime/
+          cp meta.json dist/ScreenTime/
+          cd dist && zip -r screentime.zip ScreenTime
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ScreenTime
+          path: dist/ScreenTime/*
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/screentime.zip

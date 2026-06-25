@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>ScreenTime</title>
+</head>
+<body>
+<div id="ScreenTimeConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-checkbox,emby-select">
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="ScreenTimeConfigForm">
+                <div class="sectionTitleContainer flex align-items-center">
+                    <h2 class="sectionTitle">ScreenTime</h2>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input is="emby-checkbox" type="checkbox" id="EnableTracking" />
+                        <span>Enable tracking &amp; limits</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">Global switch. Off = nothing is counted and nothing is blocked.</div>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input is="emby-checkbox" type="checkbox" id="HardStop" />
+                        <span>Hard stop (also stop the running item)</span>
+                    </label>
+                    <div class="fieldDescription checkboxFieldDescription">Off (recommended): the running episode may finish, only new playbacks are blocked. On: playback is stopped immediately when the limit is hit.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="ResetHour">Reset hour (0–23)</label>
+                    <input is="emby-input" type="number" id="ResetHour" min="0" max="23" />
+                    <div class="fieldDescription">Time of day when the daily count resets to zero. 0 = midnight.</div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="BlockMessageHeader">Message – title</label>
+                    <input is="emby-input" type="text" id="BlockMessageHeader" />
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel inputLabelUnfocused" for="BlockMessageText">Message – text</label>
+                    <input is="emby-input" type="text" id="BlockMessageText" />
+                </div>
+
+                <h3 class="sectionTitle" style="margin-top:1.5em;">Daily limits per user</h3>
+                <div class="fieldDescription" style="margin-bottom:1em;">Minutes per day. <strong>0 = no limit.</strong></div>
+                <div id="UserLimitsList"></div>
+
+                <button is="emby-button" type="submit" class="raised button-submit block emby-button" style="margin-top:1.5em;">
+                    <span>Save</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+    (function () {
+        var pluginId = "4d7408ff-07b0-49e5-b1a8-d484b93fcde6";
+
+        function loadUserRows(config) {
+            return ApiClient.getUsers().then(function (users) {
+                var container = document.querySelector('#UserLimitsList');
+                container.innerHTML = '';
+                var byId = {};
+                (config.UserLimits || []).forEach(function (l) { byId[l.UserId] = l; });
+
+                users.forEach(function (user) {
+                    var existing = byId[user.Id] || { DailyLimitMinutes: 0 };
+                    var row = document.createElement('div');
+                    row.className = 'inputContainer';
+                    row.innerHTML =
+                        '<label class="inputLabel inputLabelUnfocused">' + user.Name + '</label>' +
+                        '<input is="emby-input" type="number" min="0" class="st-user-limit" ' +
+                        'data-userid="' + user.Id + '" data-username="' + user.Name + '" ' +
+                        'value="' + (existing.DailyLimitMinutes || 0) + '" />';
+                    container.appendChild(row);
+                });
+            });
+        }
+
+        function load() {
+            Dashboard.showLoadingMsg();
+            ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                document.querySelector('#EnableTracking').checked = config.EnableTracking;
+                document.querySelector('#HardStop').checked = config.HardStop;
+                document.querySelector('#ResetHour').value = config.ResetHour || 0;
+                document.querySelector('#BlockMessageHeader').value = config.BlockMessageHeader || '';
+                document.querySelector('#BlockMessageText').value = config.BlockMessageText || '';
+                loadUserRows(config).then(function () { Dashboard.hideLoadingMsg(); });
+            });
+        }
+
+        function save(e) {
+            e.preventDefault();
+            Dashboard.showLoadingMsg();
+            ApiClient.getPluginConfiguration(pluginId).then(function (config) {
+                config.EnableTracking = document.querySelector('#EnableTracking').checked;
+                config.HardStop = document.querySelector('#HardStop').checked;
+                config.ResetHour = parseInt(document.querySelector('#ResetHour').value, 10) || 0;
+                config.BlockMessageHeader = document.querySelector('#BlockMessageHeader').value;
+                config.BlockMessageText = document.querySelector('#BlockMessageText').value;
+
+                var limits = [];
+                document.querySelectorAll('.st-user-limit').forEach(function (input) {
+                    limits.push({
+                        UserId: input.getAttribute('data-userid'),
+                        UserName: input.getAttribute('data-username'),
+                        DailyLimitMinutes: parseInt(input.value, 10) || 0
+                    });
+                });
+                config.UserLimits = limits;
+
+                ApiClient.updatePluginConfiguration(pluginId, config).then(function (result) {
+                    Dashboard.processPluginConfigurationUpdateResult(result);
+                });
+            });
+            return false;
+        }
+
+        var page = document.querySelector('#ScreenTimeConfigPage');
+        page.addEventListener('pageshow', load);
+        document.querySelector('#ScreenTimeConfigForm').addEventListener('submit', save);
+    })();
+    </script>
+</div>
+</body>
+</html>

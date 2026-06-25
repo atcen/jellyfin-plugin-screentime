@@ -1,0 +1,18 @@
+name: "ScreenTime"
+guid: "4d7408ff-07b0-49e5-b1a8-d484b93fcde6"
+version: "1.0.0.0"
+targetAbi: "10.11.0.0"
+framework: "net9.0"
+owner: "atcen"
+overview: "Screen-time control for kids' accounts"
+description: >
+  Server-side screen-time / parental control for Jellyfin. Daily watch-time limit
+  per user with a fair soft block: the running episode finishes, new playbacks are
+  blocked until the daily reset.
+category: "General"
+artifacts:
+  - "Jellyfin.Plugin.ScreenTime.dll"
+changelog: |
+  ### 1.0.0.0
+  - Initial release: per-user daily limits, fair soft block, optional hard stop,
+    configurable reset hour and on-screen message.

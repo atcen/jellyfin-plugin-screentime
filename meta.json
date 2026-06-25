@@ -1,0 +1,13 @@
+{
+    "category": "General",
+    "guid": "4d7408ff-07b0-49e5-b1a8-d484b93fcde6",
+    "name": "ScreenTime",
+    "description": "Screen-time control: daily limits per child with a fair soft block (the running episode finishes, new playbacks are blocked).",
+    "owner": "atcen",
+    "overview": "Screen-time control for kids' accounts",
+    "targetAbi": "10.11.0.0",
+    "framework": "net9.0",
+    "version": "1.0.0.0",
+    "status": "Active",
+    "autoUpdate": false
+}
